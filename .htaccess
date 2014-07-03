@@ -1,0 +1,4 @@
+AuthType Basic
+AuthName "Password Protected Area"
+AuthUserFile /etc/httpd/conf.d/htpasswd
+Require valid-user
