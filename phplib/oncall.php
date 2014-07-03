@@ -69,9 +69,11 @@ function printOnCallNotifications($on_call_name, $start, $end, $oncall_start, $o
 
         # Look for a previous copy of this alert
         if ($previous_data = checkForPreviousOnCallItem( generateOnCallAlertID($n['time'], $n['hostname'], $n['service']) )) {
+            $previous_id = $previous_data['id'];
             $previous_notes = $previous_data['notes'];
             $previous_tag = $previous_data['tag'];
         } else {
+            $previous_id = null;
             $previous_notes = null;
             $previous_tag = null;
         }
@@ -82,6 +84,7 @@ function printOnCallNotifications($on_call_name, $start, $end, $oncall_start, $o
         $html .= "<td><span class='label label-{$nagios_state_to_badge[$n['state']]}'>{$n['state']}</span></td>";
 
         # Need to populate all the information into hidden fields so we get all the data back nicely when the form is submitted
+        $html .= "<input type='hidden' name='oncall[notifications][not_{$n_num}][id]' value='{$previous_id}'>";
         $html .= "<input type='hidden' name='oncall[notifications][not_{$n_num}][hostname]' value='{$n['hostname']}'>";
         $html .= "<input type='hidden' name='oncall[notifications][not_{$n_num}][output]' value='{$n['output']}'>";
         $html .= "<input type='hidden' name='oncall[notifications][not_{$n_num}][time]' value='{$n['time']}'>";
