@@ -35,6 +35,7 @@ if (!connectToDB()) {
             $mtts = -1;
             $sleep_level = -1;
             $confidence = -1;
+            $id = mysql_real_escape_string($n['id']);
             $timestamp = mysql_real_escape_string($n['time']);
             $hostname = mysql_real_escape_string($n['hostname']);
             $output = mysql_real_escape_string($n['output']);
@@ -55,10 +56,12 @@ if (!connectToDB()) {
                 }
 
             }
-
-            $query = "INSERT INTO oncall_weekly (alert_id, range_start, range_end, timestamp, hostname, service, state, contact, output, tag, sleep_state, mtts, sleep_level, sleep_confidence, notes) VALUES
-                ('$alert_id', '$range_start', '$range_end', '$timestamp', '$hostname', '$service', '$state', '$username', '$output', '$tag', '$sleep_state', '$mtts', '$sleep_level', '$confidence','$notes')";
-
+            if ($id = null) {
+                $query = "INSERT INTO oncall_weekly (alert_id, range_start, range_end, timestamp, hostname, service, state, contact, output, tag, sleep_state, mtts, sleep_level, sleep_confidence, notes) VALUES
+                    ('$alert_id', '$range_start', '$range_end', '$timestamp', '$hostname', '$service', '$state', '$username', '$output', '$tag', '$sleep_state', '$mtts', '$sleep_level', '$confidence','$notes')";
+            } else {
+                $query = "UPDATE oncall_weekly SET alert_id='$alert_id', range_start='$range_start', range_end='$range_end', timestamp='$timestamp', hostname='$hostname', service='$service', state='$state', contact='$contact', output='$output', tag='$tag', sleep_state='$sleep_state', mtts='$mtts', sleep_level='$sleep_level', sleep_confidence='$sleep_confidence', notes='$notes') WHERE id = $id";
+                }
             logline("Processing on call line with data: $query");
             if (!mysql_query($query)) {
                 echo "Database update failed, error: " . mysql_error();
