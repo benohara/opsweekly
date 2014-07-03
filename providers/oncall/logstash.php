@@ -53,8 +53,8 @@ function getOnCallNotifications($on_call_name, $provider_global_config, $provide
             $state = $notification['_source']['nagios_state'];
             $hostname = $notification['_source']['nagios_hostname'];
             if (!$seen[$time][$hostname][$service_name][$notifyname]) {
-                $notifications[] = array("output" => "$output", "time" => "$time", "contact" => "$notifyname",
-                    "state" => "$state", "hostname" => "$hostname", "service" => "$service_name");
+                $notifications[] = array("output" => $output, "time" => $time, "contact" => $notifyname,
+                    "state" => $state, "hostname" => $hostname, "service" => $service_name);
                 $seen[$time][$hostname][$service_name][$notifyname] = 'true';
             }
         }
@@ -95,7 +95,6 @@ function doLogstashSearch($pagername, $start, $end, $config, $max_results = 1000
                 }
             }
         }';
-    file_put_contents("/tmp/test.log",$qry);
     $ch = curl_init();
     $method = "GET";
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
