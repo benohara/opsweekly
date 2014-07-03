@@ -6,12 +6,10 @@
 
 /** Plugin specific variables required
  * Global Config:
- *  - base_url: The path to your Logstash API, e.g. http://logstash.company.com:8089
+ *  - base_url: The path to your Logstash API, e.g. http://logstash.company.com:9200
  *
  * Team Config:
- *  - logstash_search: The search filter that narrows down the results to the team.
- *    - The following variables are available for subsitution inside this plugin:
- *      - #logged_in_username# = The username of the person currently using opsweekly
+ *  - notification-user-map: Maps opsweekly usernames to nagios contact names
  *
  */
 
@@ -36,7 +34,11 @@
  */
 function getOnCallNotifications($on_call_name, $provider_global_config, $provider_team_config, $start, $end) {
     // Perform a Logstash search to retrieve the Nagios notifications received in the specified timeperiod, with the specifed search filter.
-    $pagername = $provider_team_config['notification-user-map'][$on_call_name];
+    if (isset($provider_team_config['notification-user-map'][$on_call_name])) {
+        $pagername = $provider_team_config['notification-user-map'][$on_call_name];
+    } else {
+        $pagername = $on_call_name;
+    }
     $results = doLogstashSearch($pagername, $start, $end, $provider_global_config);
     if ($results['success'] === false) {
         return 'Failed to retrieve on call data from Logstash, error: ' . $results['error'];
@@ -62,7 +64,37 @@ function getOnCallNotifications($on_call_name, $provider_global_config, $provide
 
 function doLogstashSearch($pagername, $start, $end, $config, $max_results = 10000) {
     $logstash_baseurl = $config['base_url'];
-    $qry = '{ "query": { "filtered": { "query": { "query_string": { "query": "nagios_notifyname:\"'.$pagername.'\" AND NOT (nagios_state:\"OK\" OR nagios_service:\"SMS Check\")" } }, "filter": { "bool": { "must": [ { "range": { "nagios_epoch": { "from": "'.$start.'", "to": "'.$end.'"}}}]}}}}, "size": "'.$max_results.'" }}';
+    $qry = '{
+            "query": {
+                "filtered": {
+                    "query": {
+                        "query_string": {
+                            "query": "nagios_notifyname:\"'.$pagername.'\" AND NOT (nagios_state:\"ACKNOWLEDGEMENT*\" or nagios_state:\"UP\" OR nagios_state:\"OK\") AND NOT nagios_service:\"SMS Check\""
+                        }
+                    },
+                    "filter": {
+                        "bool": {
+                            "must": [
+                                {
+                                    "range": {
+                                        "nagios_epoch": {
+                                            "from": "'.$start.'",
+                                            "to": "'.$end.'"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "size": "'.$max_results.'",
+            "sort": {
+                "nagios_epoch": {
+                    "order": "asc"
+                }
+            }
+        }';
     $ch = curl_init();
     $method = "GET";
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
