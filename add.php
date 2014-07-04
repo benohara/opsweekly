@@ -63,8 +63,10 @@ include_once('phplib/nav.php')
 
                 if($results = checkForPreviousWeeklyUpdate( generateWeeklyReportID($my_username, $start_ts, $end_ts)  )) {
                     # Previous report was found
+                    $previous_id = $results['id'];
                     $previous_report = $results['report'];
                 } else {
+                    $previous_id = null;
                     $previous_report = null;
                 }
 
@@ -74,6 +76,7 @@ include_once('phplib/nav.php')
                 <script>
                     $('.textarea').wysihtml5({"image": false, "color": false});
                 </script>
+                <input type="hidden" name="id" value="<?php echo $previous_id ?>">
                 <input type="hidden" name="range_start" value="<?php echo $start_ts ?>">
                 <input type="hidden" name="range_end" value="<?php echo $end_ts ?>">
                 <button class="btn btn-primary" type="submit">Save Weekly Update</button>
