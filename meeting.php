@@ -62,12 +62,14 @@ function setDateToLastWeek() {
         <div class="pull-right"><div class="btn-group"><a class="btn" role="button" data-toggle="modal" href="#permalink-modal"><i class="icon-bookmark"></i> Permalink</a></div></div>
         <?php 
             if($results = checkForPreviousMeetingNotes( generateMeetingNotesID($start_ts, $end_ts)  )) {
+                $previous_id = $results['id'];
                 $previous_timestamp = $results['timestamp'];
                 $previous_user = $results['user'];
                 $previous_report = $results['notes'];
                 echo "<h2>Meeting Notes <small>taken by {$previous_user} at the " . getTeamName() . " Meeting held on " . date("l jS F Y", $previous_timestamp);
             } else {
                 echo "<h2>Meeting Notes <small>you are taking at the " . getTeamName() . " Meeting today (" . date("l jS F Y") . ")";
+                $previous_id = null;
                 $previous_report = null;
             }
         ?>
@@ -79,6 +81,7 @@ function setDateToLastWeek() {
         <script>
             $('.textarea').wysihtml5({"image": false, "color": false});
         </script>
+        <input type="hidden" name="id" value="<?php echo $previous_id ?>">
         <input type="hidden" name="range_start" value="<?php echo $start_ts ?>">
         <input type="hidden" name="range_end" value="<?php echo $end_ts ?>">
         <button class="btn btn-primary" type="submit">Save Meeting Notes</button>
