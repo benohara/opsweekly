@@ -467,6 +467,8 @@ function formatOnCallRowForPrint(array $n) {
     $notes = ($n['notes'] != "") ? "<i class='icon-info-sign'></i> {$n['notes']}" : "";
     if ( ($n['tag'] != "") || ($n['notes'] != "") ) {
         $html .= "<tr><td colspan='5'>{$tag}<br>{$notes}</td></tr>";
+    } else {
+        $html .= "<tr><td colspan='5'></td></tr>";
     }
     date_default_timezone_set("UTC");
 
