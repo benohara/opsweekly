@@ -29,17 +29,12 @@ function renderStatusProgressBar($items, $total) {
  * Renders a table of tag summaries for a week or a year
  */
 function renderTagTable($tags, $total, $tag_lookup) {
+    global $tag_to_badge;
     foreach ($tags as $type => $number) {
         $pct = round( ($number / $total) * 100, 2);
-        $taglabel = 'label-default';
         $tag = $tag_lookup[$type];
-        if (preg_match('/^No action taken:|^No Action Taken/', $tag)) {
-            $taglabel = 'label-success';
-        }
-        if (preg_match('/^Action taken:|^Action Taken/', $tag)) {
-            $taglabel = 'label-important';
-        }
-        $html_status_summary .= "<tr><td><span class='label {$taglabel}'>{$tag}</span></td> <td> {$number} ({$pct}%) </td></tr>";
+        $shorttag = array_shift(explode(':', $tag));
+        $html_status_summary .= "<tr><td><span class='label label-{$tag_to_badge[$shorttag]}'>{$tag}</span></td> <td> {$number} ({$pct}%) </td></tr>";
     }
     return '<table class="table">' . $html_status_summary . '</table>';
 }
