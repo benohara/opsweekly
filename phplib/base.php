@@ -466,7 +466,7 @@ function formatOnCallRowForPrint(array $n) {
     $tag = ($n['tag'] != "") ? "<span class='label label-{$tag_to_badge[$shorttag]}'><i class='icon-tag'></i><b>{$nagios_alert_tags[$n['tag']]}</b></span>" : "";
     $notes = ($n['notes'] != "") ? "<i class='icon-info-sign'></i> {$n['notes']}" : "";
     if ( ($n['tag'] != "") || ($n['notes'] != "") ) {
-        $html .= "<tr><td colspan='3'>{$tag}</td><td colspan='3'>{$notes}</td></tr>";
+        $html .= "<tr><td colspan='5'>{$tag}<br>{$notes}</td></tr>";
     }
     date_default_timezone_set("UTC");
 
