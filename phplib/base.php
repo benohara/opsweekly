@@ -107,7 +107,8 @@ function getOnCallWeekRangeWithTZ($date) {
     $oncall_start_time = getTeamOncallConfig('start');
     $oncall_end_time = getTeamOncallConfig('end');
 
-    $date = array_shift(explode('(', $date));
+    $date_bits = explode('(', $date);
+    $date = array_shift($date_bits);
     $ts = strtotime($date);
     $ts = ( date('l', $ts) == "Saturday" || date('l', $ts) == "Sunday" ) ? $ts = $ts - 172800: $ts;
     date_default_timezone_set($oncall_timezone);
