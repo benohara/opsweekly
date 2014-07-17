@@ -16,10 +16,11 @@ $pages = array("/index.php" => "Overview", "/add.php" => "Add", "/report.php" =>
 $pages_icon = array("/index.php" => "icon-home", "/add.php" => "icon-plus-sign", "/report.php" => "icon-list-alt", "/meeting.php" => "icon-bullhorn");
 $nagios_state_to_badge = array("WARNING" => "warning", "CRITICAL" => "important", "UNKNOWN" => "info", "DOWN" => "inverse", "OK" => "success");
 $nagios_state_to_bar = array("WARNING" => "warning", "CRITICAL" => "danger", "UNKNOWN" => "info", "OK" => "success");
-$nagios_alert_tags = array("" => "Untagged", "issue" => "Action taken: Service Issue (View clean)", "issuetimeperiod" => "Action taken: Service Issue, timeperiod inappropriate (View clean)",
-    "viewissue" => "Action taken: View issue (network outage/site outage, service health questionable)", "incorrecttimeperiod" => "No action taken: Timeperiod not appropriate", 
-    "downtimeexpired" => "No action taken: Work ongoing, downtime expired", "downtimenotset" => "No action taken: Work ongoing, downtime not set", 
-    "thresholdincorrect" => "No action taken: Threshold adjustment required", "checkfaulty" => "No action taken: Check is faulty/requires modification", "na" => "N/A");
+$tag_to_badge = array("action" => "success", "noaction" => "important", "" => "default");
+$nagios_alert_tags = array("" => "Untagged", "issue" => "Action Taken: Service Issue (View clean)", "issuetimeperiod" => "Action Taken: Service Issue, timeperiod inappropriate (View clean)",
+    "viewissue" => "Action Taken: View issue (network/site outage, service health questionable)", "incorrecttimeperiod" => "No Action Taken: Timeperiod not appropriate", 
+    "downtimeexpired" => "No Action Taken: Work ongoing, downtime expired", "downtimenotset" => "No Action Taken: Work ongoing, downtime not set", 
+    "thresholdincorrect" => "No Action Taken: Threshold adjustment required", "checkfaulty" => "No Action Taken: Check is faulty/requires modification", "na" => "N/A");
 $nagios_tag_categories = array("" => "Untagged", "action" => "Action Taken", "noaction" => "No Action Taken");
 $nagios_tag_category_map = array("issue" => "action", "issuetimeperiod" => "action", "viewissue" => "action", "incorrecttimeperiod" => "noaction", 
     "downtimeexpired" => "noaction", "downtimenotset" => "noaction", "thresholdincorrect" => "noaction", "checkfaulty" => "noaction");
@@ -70,6 +71,8 @@ function getTimezoneSetting() {
 }
 
 function getWeekRange($date) {
+    $date_bits = explode('(', $date);
+    $date = array_shift($date_bits);
     $ts = strtotime($date);
     $target_start = (date('l', $ts) == "Monday") ? "monday" : "last monday";
     $target_end = (date('l', $ts) == "Sunday") ? "sunday" : "next sunday";
@@ -87,6 +90,8 @@ function getOnCallWeekRange($date) {
     $oncall_start_time = getTeamOncallConfig('start');
     $oncall_end_time = getTeamOncallConfig('end');
 
+    $date_bits = explode('(', $date);
+    $date = array_shift($date_bits);
     $ts = strtotime($date);
     // If we're still in the report week, we need to make sure we don't skip forward to the next oncall
     // week otherwise the two become mismatched. 
@@ -105,6 +110,8 @@ function getOnCallWeekRangeWithTZ($date) {
     $oncall_start_time = getTeamOncallConfig('start');
     $oncall_end_time = getTeamOncallConfig('end');
 
+    $date_bits = explode('(', $date);
+    $date = array_shift($date_bits);
     $ts = strtotime($date);
     $ts = ( date('l', $ts) == "Saturday" || date('l', $ts) == "Sunday" ) ? $ts = $ts - 172800: $ts;
     date_default_timezone_set($oncall_timezone);
@@ -445,7 +452,7 @@ function printOnCallTableFooter() {
 }
 
 function formatOnCallRowForPrint(array $n) {
-    global $nagios_state_to_badge, $nagios_alert_tags, $sleep_state_icons, $sleep_state_levels;
+    global $nagios_state_to_badge, $tag_to_badge, $nagios_alert_tags, $nagios_tag_category_map, $sleep_state_icons, $sleep_state_levels;
 
     $timezone = getTimezoneSetting();
     date_default_timezone_set($timezone);
@@ -464,10 +471,12 @@ function formatOnCallRowForPrint(array $n) {
     $html = "<tr>";
     $html .= "<td>{$pretty_date} {$sleep_html}</td><td>{$n['hostname']}</td><td>{$n['service']}</td><td><pre><small>{$n['output']}</small></pre></td>";
     $html .= "<td><span class='label label-{$nagios_state_to_badge[$n['state']]}'>{$n['state']}</span></td></tr>";
-    $tag = ($n['tag'] != "") ? "<i class='icon-tag'></i> <b>{$nagios_alert_tags[$n['tag']]}</b>" : "";
-    $notes = ($n['notes'] != "") ? "<i class='icon-info-sign'></i> {$n['notes']}" : "";
+    $tag = ($n['tag'] != "") ? "<span class='label label-{$tag_to_badge[$nagios_tag_category_map[$n['tag']]]}'><i class='icon-tag'></i><b>{$nagios_alert_tags[$n['tag']]}</b></span>" : "";
+    $notes = ($n['notes'] != "") ? "<span><i class='icon-info-sign'></i> <b>{$n['contact']}:</b> {$n['notes']}</span>" : "";
     if ( ($n['tag'] != "") || ($n['notes'] != "") ) {
-        $html .= "<tr><td colspan='3'>{$tag}</td><td colspan='3'>{$notes}</td></tr>";
+        $html .= "<tr><td colspan='3'>{$tag}</td><td colspan='2'>{$notes}</td></tr>";
+    } else {
+        $html .= "<tr><td colspan='5'></td></tr>";
     }
     date_default_timezone_set("UTC");
 
@@ -494,18 +503,19 @@ function formatMeetingNotesForPrint(array $data, $small_header = false) {
 function printWeeklyHints($username, $from, $to) {
     $wanted_hints = getTeamConfig('weekly_hints');
 
-    foreach ($wanted_hints as $provider) {
-        // Load each requested provider and run the printHints() to print the hints
-        $provider_info = getWeeklyHintProvider($provider);
-        if ($provider_info && require_once($provider_info['lib'])) {
-            $provider_class = new $provider_info['class']($username, $provider_info['options'], $from, $to);
-            echo "<h4>{$provider_info['display_name']}</h4>";
-            echo $provider_class->printHints();
-        } else {
-            echo insertNotify("info", "Couldn't load weekly hint provider '{$provider}'! Please check your config.");
+    if (is_array($wanted_hints)) {
+        foreach ($wanted_hints as $provider) {
+            // Load each requested provider and run the printHints() to print the hints
+            $provider_info = getWeeklyHintProvider($provider);
+            if ($provider_info && require_once($provider_info['lib'])) {
+                $provider_class = new $provider_info['class']($username, $provider_info['options'], $from, $to);
+                echo "<h4>{$provider_info['display_name']}</h4>";
+                echo $provider_class->printHints();
+            } else {
+                echo insertNotify("info", "Couldn't load weekly hint provider '{$provider}'! Please check your config.");
+            }
         }
     }
-
 }
 
 function sendMeetingReminder($fqdn) {

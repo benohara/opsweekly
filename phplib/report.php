@@ -29,9 +29,17 @@ function renderStatusProgressBar($items, $total) {
  * Renders a table of tag summaries for a week or a year
  */
 function renderTagTable($tags, $total, $tag_lookup) {
+    global $tag_to_badge, $nagios_tag_category_map;
+    arsort($tags);
     foreach ($tags as $type => $number) {
         $pct = round( ($number / $total) * 100, 2);
-        $html_status_summary .= "<tr><td><span class='label'>{$tag_lookup[$type]}</span></td> <td> {$number} ({$pct}%) </td></tr>";
+        $tag = $tag_lookup[$type];
+        if (isset($nagios_tag_category_map[$type])) {
+            $label = $nagios_tag_category_map[$type];
+        } else {
+            $label = $type;
+        }
+        $html_status_summary .= "<tr><td><span class='label label-{$tag_to_badge[$label]}'>{$tag}</span></td> <td> {$number} ({$pct}%) </td></tr>";
     }
     return '<table class="table">' . $html_status_summary . '</table>';
 }
@@ -46,19 +54,21 @@ function renderSleepStatus($sleep_statuses, $status_total, $mtts_total, $rtts_co
     }
     $html = "<table class='table'>{$html_status_summary}</table>";
 
-    $html .= "<p class='lead'>Mean Time to Sleep: <i class='icon-time'> </i> ";
-    $html .= round( ($mtts_total / $rtts_count) / 60, 2);
-    $html .= " minutes</p>";
-    $html .= "<p class='lead'>Time spent awake due to notifications: <i class='icon-time'> </i> ";
-    $html .= round( ($mtts_total / 60 / 60), 2);
-    $html .= " hours</p>";
+    if ($mtts_total != 0) {
+        $html .= "<p class='lead'>Mean Time to Sleep: <i class='icon-time'> </i> ";
+        $html .= round( ($mtts_total / $rtts_count) / 60, 2);
+        $html .= " minutes</p>";
+        $html .= "<p class='lead'>Time spent awake due to notifications: <i class='icon-time'> </i> ";
+        $html .= round( ($mtts_total / 60 / 60), 2);
+        $html .= " hours</p>";
+    }
     $html .= "<p class='lead'>Number of times sleep was abandoned: {$ntts_count} times</p>";
 
     return $html;
 
 }
 
-function renderTopNTableBody($input_array, $limit = 10) {
+function renderTopNTableBody($input_array, $limit = 10, $type = 'host') {
     if(!is_array($input_array)) {
         return false;
     }
@@ -71,7 +81,12 @@ function renderTopNTableBody($input_array, $limit = 10) {
 
     $html = '';
     foreach($a as $k => $v) {
-        $html .= "<tr><td>{$k}</td><td>{$v}</td></tr>";
+        if ($type == 'host') {
+            $link="<a href=\"{$ROOT_URL}/search.php?query=host: {$k}\">{$k}</a>";
+        } else {
+            $link="<a href=\"{$ROOT_URL}/search.php?query=service: {$k}\">{$k}</a>";
+        }
+        $html .= "<tr><td>{$link}</td><td>{$v}</td></tr>";
     }
 
     return $html;
