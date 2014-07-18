@@ -39,6 +39,9 @@ if (!$team_data = getTeam($fqdn)) {
     die("I don't know what to do with this FQDN, please add it to config.php");
 }
 
+$teamlocales = getTeamConfig('locales');
+$locales = (isset($teamlocales)) ? $teamlocales : $default_locales;
+
 $ROOT_URL = getTeamUrl();
 
 if (!function_exists('getUsername')) {
