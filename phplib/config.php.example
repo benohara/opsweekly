@@ -150,6 +150,20 @@ $weekly_providers = array(
         "options" => array(
         ),
     ),
+    "rt" => array(
+        "display_name" => "Request Tracker",
+        "lib" => "providers/weekly/rt.php",
+        "class" => "RTHints",
+        "options" => array(
+            "rt_api_url" => "http://rt.mycompany.com/REST/1.0",
+            "rt_client_url" => "http://rt.mycompany.com",
+            "rt_api_user" => "rt_api_username",
+            "rt_api_pass" => "rt_api_password",
+            "rt-user-map" => array(
+                "opsweekly_user"     => "rt_user",
+            ),
+        ),
+    ),
 );
 
 
