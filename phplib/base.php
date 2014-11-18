@@ -468,13 +468,9 @@ function formatOnCallRowForPrint(array $n) {
     $html = "<tr>";
     $html .= "<td>{$pretty_date} {$sleep_html}</td><td>{$n['hostname']}</td><td>{$n['service']}</td><td><pre><small>{$n['output']}</small></pre></td>";
     $html .= "<td><span class='label label-{$nagios_state_to_badge[$n['state']]}'>{$n['state']}</span></td></tr>";
-    $tag = ($n['tag'] != "") ? "<span class='label label-{$tag_to_badge[$nagios_tag_category_map[$n['tag']]]}'><i class='icon-tag'></i><b>{$nagios_alert_tags[$n['tag']]}</b></span>" : "";
-    $notes = ($n['notes'] != "") ? "<span><i class='icon-info-sign'></i> <b>{$n['contact']}:</b> {$n['notes']}</span>" : "";
-    if ( ($n['tag'] != "") || ($n['notes'] != "") ) {
-        $html .= "<tr><td colspan='3'>{$tag}</td><td colspan='2'>{$notes}</td></tr>";
-    } else {
-        $html .= "<tr><td colspan='5'></td></tr>";
-    }
+    $tag = "<span class='label label-{$tag_to_badge[$nagios_tag_category_map[$n['tag']]]}'><i class='icon-tag'></i><b>{$nagios_alert_tags[$n['tag']]}</b></span>";
+    $notes = "<span><i class='icon-info-sign'></i> <b>{$n['contact']}:</b> {$n['notes']}</span>";
+    $html .= "<tr><td colspan='3'>{$tag}</td><td colspan='2'>{$notes}</td></tr>";
     date_default_timezone_set("UTC");
 
     return $html;
